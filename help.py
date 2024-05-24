@@ -11,12 +11,15 @@ bot = Bot(token="6795561368:AAF_V-ZDgABhTER9jH3xiAM8jF1vpGNx5Ew")
 dp = Dispatcher(storage=MemoryStorage())
 ID_CHANNEL = -1002140554954
 ID_GROUP = -1002066486603
+ID_CHANNEL_SOT = -1002113161420
 
 tema = {}
 context_text = {}
 context_user = {}
 context_user_msg = {}
 
+class context_sot1(StatesGroup):
+    текст = State()
 
 class context_sot(StatesGroup):
     user_id = State()
@@ -57,7 +60,7 @@ async def start(message: Message):
     f_button = InlineKeyboardButton(text='Другой вопрос', callback_data='Другой вопрос')
     g_button = InlineKeyboardButton(text='Сотрудничество🤝', callback_data='Сотрудничество🤝')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button, b_button], [c_button], [d_button], [e_button], [f_button], [g_button]])
-    await bot.send_message(message.from_user.id, text=f"👋 Привет, <a href='tg://user?id={message.from_user.id}'> {message.from_user.first_name} </a>. Я помогу тебе с решением проблем на игровом проекте Pinto.\n\nВыбери тему для своего обращения ниже и задай свой вопрос!", reply_markup=button, parse_mode="HTML")
+    await bot.send_message(message.from_user.id, text=f"👋 Привет, <a href='tg://user?id={message.from_user.id}'>{message.from_user.first_name}</a>. Я помогу тебе с решением проблем на игровом проекте Pinto.\n\nВыбери тему для своего обращения ниже и задай свой вопрос!", reply_markup=button, parse_mode="HTML")
 
 
 
@@ -69,7 +72,7 @@ async def reply(message: Message):
         if message.reply_to_message:
             for i in context_user:
                 if context_user[i].id_message == message.reply_to_message.message_id:
-                    if message.text == '/q':
+                    if message.text == '/q' or message.text == '/r':
                         a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
                         button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
                         tiket = context_user[i].тикет
@@ -87,18 +90,16 @@ async def reply(message: Message):
                         context_text[message.reply_to_message.message_id] = message.from_user.id
                     break
             else:
-                await message.reply('Диалог закрыт!')
+               # await message.reply('Диалог закрыт!')
+               pass
     if message.chat.id == ID_GROUP:
-        if 'Юзернейм:' in message.text:
+        try:
+            user_id = context_text.get(message.forward_from_message_id, 0)
+            text= f'Тикет: {context_user[user_id].тикет}\nТема: {context_user[user_id].тема}\n\nID: {context_user[user_id].id}\nТекст: {context_user[user_id].текст}'
+            id_msg = await message.reply(text)
+            id_msg = context_user[user_id].id_message = id_msg.message_id
+        except:
             pass
-        else:
-            try:
-                user_id = context_text.get(message.forward_from_message_id, 0)
-                text= f'Тикет: {context_user[user_id].тикет}\nТема: {context_user[user_id].тема}\n\nID: {context_user[user_id].id}\nТекст: {context_user[user_id].текст}'
-                id_msg = await message.reply(text)
-                id_msg = context_user[user_id].id_message = id_msg.message_id
-            except:
-                pass
 
 
             
@@ -121,6 +122,7 @@ async def context_message(message: Message, state: FSMContext):
         тема = context_user[message.from_user.id].тема
         id = context_user[message.from_user.id].id
         id_msg = context_reply.get(message.from_user.id, 0)
+        await message.answer('Ваше сообщение отправлено.\nОжидайте ответ.')
         id_msg = await bot.send_message(chat_id=ID_GROUP, text=f'Тикет: {тикет}\nТема: {тема}\n\nID: {id}\nТекст: {message.text}', reply_to_message_id=id_msg)
         context_user[message.from_user.id].id_message = id_msg.message_id
         context_user[message.from_user.id].текст = message.text
@@ -147,15 +149,42 @@ async def Отменить_обращение(callback: CallbackQuery):
 
             
 @dp.callback_query(F.data == '🏠 В начало')
-async def В_начало(callback: CallbackQuery):
+async def В_начало(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     await start(callback)
+
+async def dialog(callback: CallbackQuery):
+    a_button = InlineKeyboardButton(text='Да', callback_data='Да_ди')
+    b_button = InlineKeyboardButton(text='Нет', callback_data='Нет_ди')
+    button = InlineKeyboardMarkup(inline_keyboard=[[a_button, b_button]])
+    await callback.message.answer('Внимание: при открытии нового обращения старое закроется.\nСоздать новое обращение?', reply_markup=button)
+
+@dp.callback_query(F.data.in_(['Да_ди', 'Нет_ди']))
+async def di(callback: CallbackQuery):
+    if callback.data == 'Да_ди':
+        del context_user[callback.from_user.id]
+        await callback.message.edit_text('Старое обращение успешно закрылось.\nТеперь можете повторить новое обращение.')
+        await start(callback)
+    if callback.data == 'Нет_ди':
+        await callback.message.edit_text('Благодарим за ответ.\nДождитесь обработки старого обращения.')
+        await start(callback)
+
+
 
 
 async def ввод(callback: CallbackQuery, state: FSMContext):
-    a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
-    button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
-    await callback.message.answer('🤔Странно...\n\nПришли в чат свой ID для обработки запроса.', reply_markup=button)
-    await state.set_state(context.id)
+    for i in context_user:
+        if context_user[i].user_id == callback.from_user.id:
+            print('1')
+            if context_user[i].id != None:
+                print('2')
+                await dialog(callback)
+                break 
+    else:
+        a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
+        button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
+        await callback.message.answer('🤔Странно...\n\nПришли в чат свой ID для обработки запроса.', reply_markup=button)
+        await state.set_state(context.id)
 
 @dp.message(StateFilter(context.id))
 async def ввод_id(message: Message, state: FSMContext):
@@ -188,6 +217,7 @@ async def ввод_текст(message: Message, state: FSMContext):
     id_msg1 = await bot.send_message(ID_CHANNEL, text=text)
     await bot.pin_chat_message(ID_CHANNEL, id_msg1.message_id)
     context_user[message.from_user.id].id_message = id_msg1.message_id
+    context_user[message.from_user.id].user_id = message.from_user.id
     context_text = {id_msg1.message_id: message.from_user.id}
     context_delete = {message.from_user.id: id_msg1.message_id}
     await state.clear()
@@ -228,21 +258,21 @@ async def Меньше_2_часов_Депозит(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'Больше 2 часов_Депозит')
 async def Больше_2_часов_Депозит(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Депозит/Не начислился депозит'
     await ввод(callback, state)
 
 @dp.callback_query(F.data == 'Пришла не та сумма_Депозит')
 async def Пришла_не_та_сумма_Депозит(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Депозит/Пришла не та сумма'
     await ввод(callback, state)
 
 @dp.callback_query(F.data == 'Не пришел бонус к депозиту_Депозит')
 async def Не_пришел_бонус_к_депозиту_Депозит(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Депозит/Не пришел бонус к депозиту'
     await ввод(callback, state)
@@ -264,6 +294,10 @@ async def Назад0(callback: CallbackQuery, state: FSMContext):
         await Реферальная_система(callback)
     if callback.data == 'Назад_Сотрудничество':
         await Сотрудничество(callback)
+    try:
+        await state.clear()
+    except:
+        pass
 
 
 
@@ -304,7 +338,7 @@ async def Меньше_одного_дня_Вывод(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'Больше одного дня_Вывод')
 async def Больше_одного_дня_Вывод(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Вывод/Не пришел вывод/Одобрили вывод'
     await ввод(callback, state)
@@ -326,14 +360,14 @@ async def Меньше_двух_дней_Вывод(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'Больше двух дней_Вывод')
 async def Больше_двух_дней_Вывод(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Вывод/Не пришел вывод/Не одобрили вывод'
     await ввод(callback, state)
 
 @dp.callback_query(F.data == 'Пришла не та сумма_Вывод')
 async def Пришла_не_та_сумма_Вывод(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Вывод/Пришла не та сумма'
     await ввод(callback, state)
@@ -369,7 +403,7 @@ async def Отображен_Ставки(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'Не отображен_Ставки')
 async def Не_отображен_Ставки(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Ставки/Не пришел выигрыш/Не отображен'
     await ввод(callback, state)
@@ -391,7 +425,7 @@ async def Отображена_Ставки(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'Не отображена_Ставки')
 async def Не_отображена_Ставки(callback: CallbackQuery, state: FSMContext):
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Ставки/Пропала ставка/Не отображена'
     await ввод(callback, state)
@@ -435,11 +469,32 @@ async def Реферальная_система(callback: CallbackQuery):
     await callback.message.answer('🤓Какой у тебя вопрос?', reply_markup=button)
 
 @dp.callback_query(F.data == 'Подключение Реферальная_система')
-async def Подключение_RevShare_Реферальная_система(callback: CallbackQuery):
+async def Подключение_RevShare_Реферальная_система(callback: CallbackQuery, state: FSMContext):
     a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
     b_button = InlineKeyboardButton(text='Назад', callback_data='Назад_Реферальная_система')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button, b_button]])
     await callback.message.answer('👨‍💻Расскажи подробнее про свою деятельность и твой трафик. Опиши, чем ты занимаешься: может быть ютуб, стримы или ты веб-мастер.\n\nТакже пришли ссылку на свои ресурсы, это повысит твои шансы по подключению к системе RevShare!', reply_markup=button)
+    await state.set_state(context_sot1.текст)
+
+@dp.message(StateFilter(context_sot1.текст))
+async def Подключение_RevShare_Реферальная_система_текст(message: Message, state: FSMContext):
+    global context_text, context_user, context_delete
+    while True:
+        num = random.randint(1000000, 9999999)
+        if num not in context_user:
+            break
+        else:
+            print('есть')
+    a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
+    button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
+    await message.answer('🙂Отлично!\n\nЕсли нам подойдет твоя заявка, то мы обязательно тебе напишем!', reply_markup=button)
+    text= f'Тикет: №{str(num)}\nТема: Реферальная система/Подключение RevShare\n\nЮзернейм: @{message.from_user.username}\nТекст: {message.text}'
+    await bot.send_message(ID_CHANNEL_SOT, text=text)
+    await state.clear()
+
+
+
+
 
 
 
@@ -449,7 +504,7 @@ async def Другой_вопрос(callback: CallbackQuery, state: FSMContext):
     a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
     await callback.message.answer('🤓Какой у тебя вопрос?', reply_markup=button)
-    if callback.message.from_user.id not in context_user:
+    if callback.from_user.id not in context_user:
         context_user[callback.from_user.id] = context()
     context_user[callback.from_user.id].тема = 'Другой вопрос'
     context_user[callback.from_user.id].id = ' '
@@ -495,9 +550,8 @@ async def Сотрудничество_тикет(message: Message, state: FSMCo
     a_button = InlineKeyboardButton(text='🏠 В начало', callback_data='🏠 В начало')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button]])
     await message.answer('🙂Отлично!\n\nЕсли нам подойдет твоя заявка, то мы обязательно тебе напишем!', reply_markup=button)
-    text= f'Тикет: {context_user[message.from_user.id].тикет}\nТема: {context_user[message.from_user.id].тема}\nЮзернейм: {context_user[message.from_user.id].username}\nТекст: {context_user[message.from_user.id].текст}'
-    id_msg1 = await bot.send_message(ID_CHANNEL, text=text)
-    await bot.pin_chat_message(ID_CHANNEL, id_msg1.message_id)
+    text= f'Тикет: {context_user[message.from_user.id].тикет}\nТема: {context_user[message.from_user.id].тема}\n\nЮзернейм: {context_user[message.from_user.id].username}\nТекст: {context_user[message.from_user.id].текст}'
+    await bot.send_message(ID_CHANNEL_SOT, text=text)
     await state.clear()
 
 
