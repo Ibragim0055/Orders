@@ -308,6 +308,8 @@ async def replenish(call: CallbackQuery):
     if 1 <= int(number) <= 10:
         number = int(number) * 1000
     replenish_sum_user = {call.from_user.id: [number, call.data]}
+    print(replenish_sum_user)
+    print(replenish_sum_user.get(call.from_user.id, 0)[1]
     a_button = InlineKeyboardButton(text='Tether USDT TRC20', callback_data='Tether USDT TRC20')
     b_button = InlineKeyboardButton(text='🏠 Перейти в начало', callback_data='Перейти в начало')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button], [b_button]])
