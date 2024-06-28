@@ -310,7 +310,7 @@ async def replenish(call: CallbackQuery):
     replenish_sum_user = {call.from_user.id: [number, call.data]}
     user_data = replenish_sum_user.get(call.from_user.id, [0, ""])
     user_data_str = f"{user_data[0]}, {user_data[1]}"  # Преобразуем данные пользователя в строку
-    print(user_data_str)
+    print(user_data_str.encode('utf-8'))
     a_button = InlineKeyboardButton(text='Tether USDT TRC20', callback_data='Tether USDT TRC20')
     b_button = InlineKeyboardButton(text='🏠 Перейти в начало', callback_data='Перейти в начало')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button], [b_button]])
