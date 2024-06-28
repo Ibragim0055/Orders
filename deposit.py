@@ -308,9 +308,6 @@ async def replenish(call: CallbackQuery):
     if 1 <= int(number) <= 10:
         number = int(number) * 1000
     replenish_sum_user = {call.from_user.id: [number, call.data]}
-    print(number)
-    user_data = replenish_sum_user.get(call.from_user.id, 0).encode('utf-8')
-    print(user_data)
     a_button = InlineKeyboardButton(text='Tether USDT TRC20', callback_data='Tether USDT TRC20')
     b_button = InlineKeyboardButton(text='🏠 Перейти в начало', callback_data='Перейти в начало')
     button   = InlineKeyboardMarkup(inline_keyboard=[[a_button], [b_button]])
@@ -319,6 +316,7 @@ async def replenish(call: CallbackQuery):
 @dp.callback_query(F.data == 'Tether USDT TRC20')
 async def Only1(call: CallbackQuery):
     global replenish_sum_user
+    print(replenish_sum_user.get(call.from_user.id, 0))
     user_chat_member = await bot.get_chat_member(-1001613934290, call.from_user.id)
     if user_chat_member.status == 'member':
         a_button = InlineKeyboardButton(text='Я оплатил(а)', callback_data='Я оплатил(а)')
