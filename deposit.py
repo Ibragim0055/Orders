@@ -55,7 +55,8 @@ async def cr_bot():
     id BIGSERIAL PRIMARY KEY,
     users_h bigint unique,
 	second_h bigint,
-	bot_h bigint
+	bot_h bigint,
+    score text
 )
 ''') 
     await conn.close() 
