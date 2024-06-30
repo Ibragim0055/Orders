@@ -315,7 +315,6 @@ async def replenish(call: CallbackQuery):
 
 @dp.callback_query(F.data == 'Tether USDT TRC20')
 async def Only1(call: CallbackQuery):
-    global replenish_sum_user
     user_chat_member = await bot.get_chat_member(-1001613934290, call.from_user.id)
     if user_chat_member.status == 'member':
         a_button = InlineKeyboardButton(text='Я оплатил(а)', callback_data='Я оплатил(а)')
