@@ -61,7 +61,7 @@ async def cr_bot():
 ''') 
     await conn.close() 
 
-bot = Bot(token='7409696935:AAF-9MKFI0hRjxwVdZASQdaPOAP8iLq6VcA')
+bot = Bot(token='7409696935:AAF-')
 
 dp = Dispatcher(storage=MemoryStorage())
 
