@@ -10,7 +10,7 @@ import asyncpg
 import pytz
 from datetime import datetime
 
-bot = Bot(token="7062461826:AAFICNArnAs1ZMN3CN3Rb4prX2SJQBTyLRE")
+bot = Bot(token="7062461826:")
 dp = Dispatcher(storage=MemoryStorage())
 
 async def cr():
