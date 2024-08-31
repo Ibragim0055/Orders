@@ -16,7 +16,7 @@ import pytz
 from datetime import datetime
 
 
-bot = Bot(token='7128343170:AAGIznQNpQOCrejtx4FM_v2ZPU70RNOnd7M')
+bot = Bot(token='7128343170:')
 
 dp = Dispatcher(storage=MemoryStorage())
 
