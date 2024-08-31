@@ -7,7 +7,7 @@ from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
-bot = Bot(token="6795561368:AAF_V-ZDgABhTER9jH3xiAM8jF1vpGNx5Ew")
+bot = Bot(token="6795561368:AAF_V-")
 dp = Dispatcher(storage=MemoryStorage())
 ID_CHANNEL = -1002140554954
 ID_GROUP = -1002066486603
