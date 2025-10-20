@@ -1,0 +1,7 @@
+{
+  "url": "https://your-payment-service.com",
+  "name": "Payment Service",
+  "iconUrl": "https://raw.githubusercontent.com/ton-blockchain/wallet-contract/main/logo.png",
+  "termsOfUseUrl": "https://your-payment-service.com/terms",
+  "privacyPolicyUrl": "https://your-payment-service.com/privacy"
+}
